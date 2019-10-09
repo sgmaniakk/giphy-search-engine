@@ -1,5 +1,5 @@
 import React from 'react';
-import './App.css';
+import '../styles/App.css';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import GridList from '@material-ui/core/GridList';
 import GridListTile from '@material-ui/core/GridListTile';
@@ -44,9 +44,7 @@ class App extends React.Component {
               maxWidth: 800
             }}
           />
-          <GridList
-            cols={2}
-          >
+          <GridList cols={2}>
             // TODO - show results in grid;
             {this.state.fetchedData.map(tile => (
               <GridListTile key={tile.img} cols={tile.cols || 1}>
