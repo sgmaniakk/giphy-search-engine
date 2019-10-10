@@ -4,52 +4,61 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import GridList from '@material-ui/core/GridList';
 import GridListTile from '@material-ui/core/GridListTile';
 import SearchBar from 'material-ui-search-bar';
+import search from '../services/giphyAPI';
+import {CopyToClipboard} from 'react-copy-to-clipboard';
 
 class App extends React.Component {
   constructor() {
     super();
 
     this.state = {
-      fetchedData: [
-        {img: 'https://supersimple.com/wp-content/uploads/hello-2-1080-740.jpg', title:'hello'},
-        {img: 'https://www.himgs.com/imagenes/hello/social/hello-fb-logo.png', title:'what'},
-        {img: 'https://i.ytimg.com/vi/ZJAbLpm3AXA/maxresdefault.jpg', title:'is'},
-        {img: 'https://cdn1.vectorstock.com/i/1000x1000/24/50/cartoon-lama-design-hello-card-with-cute-vector-20402450.jpg', title:'up my good man?'}
-      ]
+      searchBarInput: '',
+      fetchedData: [],
     };
+  }
+
+  handleInputChange = (e) => {
+    this.setState({
+      ...this.state,
+      searchBarInput: e,
+    });
+  }
+
+  handleRequestSearch = async () => {
+    const data = await search(this.state.searchBarInput);
+    this.setState({
+      ...this.state,
+      fetchedData: data.data
+    });
   }
 
   render = () => {
     return (
       <MuiThemeProvider>
         <div className="App">
-          <header className="App-header">
-            <p>
-              Edit <code>src/App.js</code> and save to reload.
-            </p>
-            <a
-              className="App-link"
-              href="https://reactjs.org"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learn React
-            </a>
-          </header>
+          <h1>Gif Search</h1>
           <SearchBar
-            onChange={() => console.log('onChange')}
-            onRequestSearch={() => console.log('onRequestSearch')}
+            onChange={(e) => this.handleInputChange(e)}
+            onRequestSearch={() => this.handleRequestSearch()}
             style={{
-              margin: '0 auto',
-              maxWidth: 800
+              marginBottom: '10%',
+              maxWidth: '50%',
             }}
           />
-          <GridList cols={2}>
-            // TODO - show results in grid;
+          <GridList 
+            cols={2}
+            style={{
+              marginLeft: '10%',
+              marginRight: '10%',
+              marginBottom: '10%'
+            }}
+          >
             {this.state.fetchedData.map(tile => (
-              <GridListTile key={tile.img} cols={tile.cols || 1}>
-                <img src={tile.img} alt={tile.title} />
-              </GridListTile>
+              <CopyToClipboard key={tile.id} text={tile.images.original.url}>
+                <GridListTile cols={tile.cols || 1}>
+                  <img src={tile.images.original.url} alt={tile.title}/>
+                </GridListTile>
+              </CopyToClipboard>
             ))}
           </GridList>
         </div>
