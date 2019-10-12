@@ -7,10 +7,14 @@ import SearchBar from 'material-ui-search-bar';
 import search from '../services/giphyAPI';
 import {CopyToClipboard} from 'react-copy-to-clipboard';
 import ReactLoading from 'react-loading';
-import ReactPaginate from 'react-paginate';
+import Pagination from 'react-bootstrap/Pagination'
+import 'bootstrap/dist/css/bootstrap.min.css';
 
+// TODO - allow the user to adjust the page size, change to INITIAL_PAGE_SIZE 
 const PAGE_SIZE = 8;
-const INITIAL_PAGE = 0;
+const INITIAL_PAGE = 1;
+const FETCH = 'FETCH';
+const CHANGE = 'CHANGE';
 
 class App extends React.Component {
 
@@ -33,47 +37,95 @@ class App extends React.Component {
     });
   }
 
-  handleRequestSearch = async () => {
+  fetchResults = async (action) => {
     this.setState({
       ...this.state,
       isLoading: true,
-      currentPage: INITIAL_PAGE,
-    });
-    const data = await search(this.state.searchBarInput, PAGE_SIZE, INITIAL_PAGE);
-    this.setState({
-      ...this.state,
-      fetchedData: data.data,
-      isLoading: false,
-      totalCount: data.pagination.total_count,
+      currentPage: action === FETCH ? INITIAL_PAGE : this.state.currentPage,
+    }, async () => {
+      let data = null;
+      try {
+        data = await search(this.state.searchBarInput, PAGE_SIZE, this.state.currentPage);
+      } catch (e) {
+        console.log(e);
+        //TODO: handle error here
+      } finally {
+        this.setState({
+          ...this.state,
+          fetchedData: data ? data.data : [],
+          isLoading: false,
+          totalCount: data? data.pagination.total_count : 0,
+        });
+      }
     });
   }
 
-  handleChangePage = async (newPage) => {
+  handleChangePage = async (e) => {
+    console.log('newpage!', e.target.text);
     this.setState({
       ...this.state,
-      isLoading: true,
-      currentPage: newPage,
-    });
-    const data = await search(this.state.searchBarInput, PAGE_SIZE, newPage);
-    this.setState({
-      ...this.state,
-      fetchedData: data.data,
-      isLoading: false,
+      currentPage: parseInt(e.target.text),
+    }, () => {
+      this.fetchResults(CHANGE);
     });
   }
 
   render = () => {
-    console.log(Math.floor(this.state.totalCount/PAGE_SIZE), this.state.totalCount);
+    let paginationItems = [];
+    const maxPaginationItems = 8;
+    const numItems = this.state.totalCount > PAGE_SIZE 
+      ? Math.floor(this.state.totalCount / PAGE_SIZE) 
+      : this.state.totalCount;
+    const createPageItem = (num) => {
+      console.log(this.state.currentPage, num);
+      return (
+        <Pagination.Item 
+              key={num}
+              active={num === this.state.currentPage}
+        >
+          {num}
+        </Pagination.Item>
+      );
+    };
+    if (numItems > 1) {
+      paginationItems.push(<Pagination.Prev key={'prev'}/>);
+      if (numItems < maxPaginationItems) {
+        for (let i = 1; i <= numItems; i++) {
+          paginationItems.push(
+            createPageItem(i)
+          );
+        }
+      } else {
+        for (let i = 1; i < Math.floor(maxPaginationItems/2) + 1; i++) {
+          paginationItems.push(
+            createPageItem(i)
+          );
+        }
+        paginationItems.push(<Pagination.Ellipsis key={'ellipsis'}/>);
+        for (let i = numItems - Math.floor(maxPaginationItems/2); i < numItems; i++) {
+          paginationItems.push(
+            createPageItem(i)
+          );
+        }
+      }
+      paginationItems.push(<Pagination.Next key={'next'}/>);
+    }
     return (
       <MuiThemeProvider>
         <div className="App">
+        <link
+          rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+          crossOrigin="anonymous"
+        />
           <h1>Gif Search</h1>
           <div className="centered">
             <SearchBar
               onChange={(e) => this.handleInputChange(e)}
-              onRequestSearch={() => this.handleRequestSearch()}
+              onRequestSearch={() => this.fetchResults(FETCH)}
               style={{
-                marginBottom: '10%',
+                marginBottom: '3%',
                 maxWidth: '50%',
               }}
             />
@@ -83,6 +135,9 @@ class App extends React.Component {
           :
             (this.state.totalCount > 0 ?
               <div>
+                <Pagination className='centered' onClick={this.handleChangePage}>
+                  {paginationItems}
+                </Pagination>
                 <GridList
                   className="centered"
                   cols={2}
@@ -100,14 +155,6 @@ class App extends React.Component {
                     </CopyToClipboard>
                   ))}
                 </GridList>
-                <ReactPaginate
-                  previousLabel={'previous'}
-                  nextLabel={'next'}
-                  breakLabel={'...'}
-                  pageCount={Math.floor(this.state.totalCount/PAGE_SIZE)}
-                  pageRangeDisplayed={7}
-                  marginPagesDisplayed={3}
-                />
               </div>
               :
               null
