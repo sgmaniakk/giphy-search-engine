@@ -26,3 +26,9 @@
   justify-content: center;
   align-items: center;
 }
+
+/* prevent scrolling on the body.
+    NOTE: Does not work for IOS */
+html, body {
+  overflow: hidden;
+}

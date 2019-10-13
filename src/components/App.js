@@ -9,6 +9,7 @@ import {CopyToClipboard} from 'react-copy-to-clipboard';
 import ReactLoading from 'react-loading';
 import Pagination from 'react-bootstrap/Pagination'
 import 'bootstrap/dist/css/bootstrap.min.css';
+import ImageGridList from './ImageGridList';
 
 // TODO - allow the user to adjust the page size, change to INITIAL_PAGE_SIZE 
 const PAGE_SIZE = 8;
@@ -160,23 +161,7 @@ class App extends React.Component {
                 <div style={{
                     overflowY: 'scroll'
                   }}>
-                  <GridList
-                    className="centered"
-                    cols={2}
-                    style={{
-                      marginLeft: '10%',
-                      marginRight: '10%',
-                      marginBottom: '10%'
-                    }}
-                  >
-                    {this.state.fetchedData.map(tile => (
-                      <CopyToClipboard key={tile.id} text={tile.images.original.url}>
-                        <GridListTile cols={tile.cols || 1}>
-                          <img src={tile.images.original.url} alt={tile.title}/>
-                        </GridListTile>
-                      </CopyToClipboard>
-                    ))}
-                  </GridList>
+                  <ImageGridList fetchedData={this.state.fetchedData}/>
                 </div>
               </div>
               :
