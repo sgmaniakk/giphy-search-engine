@@ -8,6 +8,7 @@
     "material-ui": "^0.20.2",
     "material-ui-search-bar": "^0.4.2",
     "pagination": "github:react-bootstrap/Pagination",
+    "prop-types": "^15.7.2",
     "react": "^16.10.2",
     "react-bootstrap": "^1.0.0-beta.14",
     "react-copy-to-clipboard": "^5.0.1",
