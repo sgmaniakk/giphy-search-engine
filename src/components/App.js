@@ -13,13 +13,18 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 // TODO - allow the user to adjust the page size, change to INITIAL_PAGE_SIZE 
 const PAGE_SIZE = 8;
 const INITIAL_PAGE = 1;
+const MAX_PAGINATION_ITEMS = 8;
 const FETCH = 'FETCH';
 const CHANGE = 'CHANGE';
 
+// NOTE - there seems to be a bug, you can only retreive 5000 items per search
+// otherwise, you will receive no results on your query
+const MAX_OFFSET = 5000;
+
 class App extends React.Component {
 
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
 
     this.state = {
       searchBarInput: '',
@@ -43,9 +48,17 @@ class App extends React.Component {
       isLoading: true,
       currentPage: action === FETCH ? INITIAL_PAGE : this.state.currentPage,
     }, async () => {
+
+      const sleep = (ms) => {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
+      // doing this to demo the loading component :-)
+      await sleep(1500);
+
       let data = null;
       try {
-        data = await search(this.state.searchBarInput, PAGE_SIZE, this.state.currentPage);
+        data = await search(this.state.searchBarInput, PAGE_SIZE, this.state.currentPage-1);
       } catch (e) {
         console.log(e);
         //TODO: handle error here
@@ -61,7 +74,11 @@ class App extends React.Component {
   }
 
   handleChangePage = async (e) => {
-    console.log('newpage!', e.target.text);
+    // we want to ignore anytime the user clicks on the Pagination
+    // component, but does not click on a button
+    if (!e.target.text) {
+      return;
+    }
     this.setState({
       ...this.state,
       currentPage: parseInt(e.target.text),
@@ -72,12 +89,16 @@ class App extends React.Component {
 
   render = () => {
     let paginationItems = [];
-    const maxPaginationItems = 8;
-    const numItems = this.state.totalCount > PAGE_SIZE 
+    const maxItems = Math.floor(MAX_OFFSET / PAGE_SIZE);
+    let numItems = this.state.totalCount > PAGE_SIZE
       ? Math.floor(this.state.totalCount / PAGE_SIZE) 
       : this.state.totalCount;
+
+    if (numItems > maxItems) {
+      numItems = maxItems;
+    }
+
     const createPageItem = (num) => {
-      console.log(this.state.currentPage, num);
       return (
         <Pagination.Item 
               key={num}
@@ -87,28 +108,24 @@ class App extends React.Component {
         </Pagination.Item>
       );
     };
-    if (numItems > 1) {
-      paginationItems.push(<Pagination.Prev key={'prev'}/>);
-      if (numItems < maxPaginationItems) {
-        for (let i = 1; i <= numItems; i++) {
-          paginationItems.push(
-            createPageItem(i)
-          );
-        }
-      } else {
-        for (let i = 1; i < Math.floor(maxPaginationItems/2) + 1; i++) {
-          paginationItems.push(
-            createPageItem(i)
-          );
-        }
-        paginationItems.push(<Pagination.Ellipsis key={'ellipsis'}/>);
-        for (let i = numItems - Math.floor(maxPaginationItems/2); i < numItems; i++) {
-          paginationItems.push(
-            createPageItem(i)
-          );
-        }
+    if (numItems > MAX_PAGINATION_ITEMS){
+      for (let i = 1; i < Math.floor(MAX_PAGINATION_ITEMS/2) + 1; i++) {
+        paginationItems.push(
+          createPageItem(i)
+        );
       }
-      paginationItems.push(<Pagination.Next key={'next'}/>);
+      paginationItems.push(<Pagination.Ellipsis key={'ellipsis'}/>);
+      for (let i = numItems - Math.floor(MAX_PAGINATION_ITEMS/2) + 1; i < numItems + 1; i++) {
+        paginationItems.push(
+          createPageItem(i)
+        );
+      }
+    } else if (numItems > 1) {
+      for (let i = 1; i <= numItems; i++) {
+        paginationItems.push(
+          createPageItem(i)
+        );
+      }
     }
     return (
       <MuiThemeProvider>
@@ -131,30 +148,36 @@ class App extends React.Component {
             />
           </div>
           {this.state.isLoading ?
-            <ReactLoading className="centered" type={'spin'} color={'black'} height={'20%'} width={'20%'} />
+            <div className='centered'>
+              <ReactLoading type={'spin'} color={'black'} height={'30%'} width={'30%'}/>
+            </div>
           :
             (this.state.totalCount > 0 ?
               <div>
                 <Pagination className='centered' onClick={this.handleChangePage}>
                   {paginationItems}
                 </Pagination>
-                <GridList
-                  className="centered"
-                  cols={2}
-                  style={{
-                    marginLeft: '10%',
-                    marginRight: '10%',
-                    marginBottom: '10%'
-                  }}
-                >
-                  {this.state.fetchedData.map(tile => (
-                    <CopyToClipboard key={tile.id} text={tile.images.original.url}>
-                      <GridListTile cols={tile.cols || 1}>
-                        <img src={tile.images.original.url} alt={tile.title}/>
-                      </GridListTile>
-                    </CopyToClipboard>
-                  ))}
-                </GridList>
+                <div style={{
+                    overflowY: 'scroll'
+                  }}>
+                  <GridList
+                    className="centered"
+                    cols={2}
+                    style={{
+                      marginLeft: '10%',
+                      marginRight: '10%',
+                      marginBottom: '10%'
+                    }}
+                  >
+                    {this.state.fetchedData.map(tile => (
+                      <CopyToClipboard key={tile.id} text={tile.images.original.url}>
+                        <GridListTile cols={tile.cols || 1}>
+                          <img src={tile.images.original.url} alt={tile.title}/>
+                        </GridListTile>
+                      </CopyToClipboard>
+                    ))}
+                  </GridList>
+                </div>
               </div>
               :
               null
