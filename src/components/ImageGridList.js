@@ -21,30 +21,44 @@ export default function ImageGridList({ fetchedData }) {
   }));
 
   ImageGridList.defaultProps = {
-    fetchedData: [],
+    fetchedData: {},
   };
 
   ImageGridList.propTypes = {
-    fetchedData: PropTypes.arrayOf(PropTypes.object),
+    fetchedData: PropTypes.shape({
+      data: PropTypes.array,
+      meta: PropTypes.object,
+      pagination: PropTypes.object,
+    }),
   };
 
   const classes = useStyles();
   return (
     // eslint-disable-next-line react/jsx-filename-extension
-    <div className={classes.root}>
-      <GridList
-        cellHeight={160}
-        className={classes.gridList}
-        cols={2}
-      >
-        {fetchedData.map((tile) => (
-          <CopyToClipboard key={tile.id} text={tile.images.original.url}>
-            <GridListTile cols={tile.cols || 1}>
-              <img src={tile.images.original.url} alt={tile.title} />
-            </GridListTile>
-          </CopyToClipboard>
-        ))}
-      </GridList>
+    <div>
+      { ('data' in fetchedData)
+        ? (
+          <div className={classes.root}>
+            { fetchedData.data.length > 0
+              ? (
+                <GridList
+                  cellHeight={160}
+                  className={classes.gridList}
+                  cols={2}
+                >
+                  {fetchedData.data.map((tile) => (
+                    <CopyToClipboard key={tile.id} text={tile.images.original.url}>
+                      <GridListTile cols={tile.cols || 1}>
+                        <img src={tile.images.original.url} alt={tile.title} />
+                      </GridListTile>
+                    </CopyToClipboard>
+                  ))}
+                </GridList>
+              )
+              : <h2>No results :/ Please try searching something else.</h2>}
+          </div>
+        )
+        : null}
     </div>
   );
 }
