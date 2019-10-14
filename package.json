@@ -15,7 +15,8 @@
     "react-dom": "^16.10.2",
     "react-loading": "^2.0.3",
     "react-paginate": "^6.3.0",
-    "react-scripts": "3.2.0"
+    "react-scripts": "3.2.0",
+    "react-toastify": "^5.4.0"
   },
   "scripts": {
     "start": "react-scripts start",

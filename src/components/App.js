@@ -5,9 +5,14 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import SearchBar from 'material-ui-search-bar';
 import ReactLoading from 'react-loading';
 import Pagination from 'react-bootstrap/Pagination';
+import { toast } from 'react-toastify';
 import search from '../services/giphyAPI';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import ImageGridList from './ImageGridList';
+import 'react-toastify/dist/ReactToastify.css';
+
+// configure toast container
+toast.configure();
 
 // TODO - allow the user to adjust the page size, change to INITIAL_PAGE_SIZE
 const PAGE_SIZE = 8;
@@ -16,6 +21,8 @@ const MAX_PAGINATION_ITEMS = 8;
 const MARGIN_SIZE = 2;
 const FETCH = 'FETCH';
 const CHANGE = 'CHANGE';
+const PAGINATION = 'pagination';
+const MESSAGE = 'message';
 
 // events to ignore when the user changes page
 const IGNORE = ['ellipsisStart', 'ellipsisEnd'];
@@ -34,12 +41,14 @@ class App extends React.Component {
       fetchedData: {},
       isLoading: false,
       currentPage: INITIAL_PAGE,
+      error: '',
     };
   }
 
   handleInputChange = (e) => {
     this.setState({
       searchBarInput: e,
+      error: '',
     });
   }
 
@@ -54,13 +63,24 @@ class App extends React.Component {
       // otherwise the results will load too quickly
       await sleep(500);
 
-      let data = null;
+      let data = {};
       try {
         data = await search(this.state.searchBarInput, PAGE_SIZE, this.state.currentPage - 1);
+        console.log(data);
       } catch (e) {
-        console.log(e);
-        // TODO: handle error here
+        // display any exceptions thrown
+        toast.error(e.message, {
+          position: toast.POSITION.BOTTOM_CENTER,
+        });
+        return;
       } finally {
+        // display any errors handed to us by the API
+        if (MESSAGE in data) {
+          toast.error(data.message, {
+            position: toast.POSITION.BOTTOM_CENTER,
+          });
+          data = {};
+        }
         this.setState({
           fetchedData: data,
           isLoading: false,
@@ -86,7 +106,9 @@ class App extends React.Component {
     // first we deal with pagination logic
     const paginationItems = [];
     const maxItems = Math.floor(MAX_OFFSET / PAGE_SIZE);
-    const totalCount = 'pagination' in this.state.fetchedData ? this.state.fetchedData.pagination.total_count : 0;
+    const totalCount = PAGINATION in this.state.fetchedData
+      ? this.state.fetchedData.pagination.total_count : 0;
+
     let numItems = totalCount > PAGE_SIZE
       ? Math.floor(totalCount / PAGE_SIZE)
       : totalCount;
@@ -164,10 +186,16 @@ class App extends React.Component {
             )
             : (
               <div>
-                <Pagination className="centered" onClick={this.handleChangePage}>
-                  {paginationItems}
-                </Pagination>
-                <ImageGridList fetchedData={this.state.fetchedData} />
+                {this.state.error
+                  ? null
+                  : (
+                    <div>
+                      <Pagination className="centered" onClick={this.handleChangePage}>
+                        {paginationItems}
+                      </Pagination>
+                      <ImageGridList fetchedData={this.state.fetchedData} />
+                    </div>
+                  )}
               </div>
             )}
         </div>

@@ -5,6 +5,8 @@ import { CopyToClipboard } from 'react-copy-to-clipboard';
 import GridListTile from '@material-ui/core/GridListTile';
 import PropTypes from 'prop-types';
 
+const DATA = 'data';
+
 export default function ImageGridList({ fetchedData }) {
   const useStyles = makeStyles(() => ({
     root: {
@@ -36,7 +38,7 @@ export default function ImageGridList({ fetchedData }) {
   return (
     // eslint-disable-next-line react/jsx-filename-extension
     <div>
-      { ('data' in fetchedData)
+      { (DATA in fetchedData)
         ? (
           <div className={classes.root}>
             { fetchedData.data.length > 0
