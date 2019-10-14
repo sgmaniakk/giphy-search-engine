@@ -2,8 +2,8 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 ## To run locally:
 
-### `git clone https://github.com/sgmaniakk/giphy-search-engine.git && cd giphy-search-engine`
+1. `git clone https://github.com/sgmaniakk/giphy-search-engine.git && cd giphy-search-engine`
 
-### `npm install`
+2. `npm install`
 
-### `npm start`
+3. `npm start`
